@@ -1,53 +1,58 @@
-import { ProductCard } from "@/components/products/ProductCard";
+import { useState, useEffect } from "react";
+import ProductCard from "@/components/products/ProductCard";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
-const featuredProducts = [
-  {
-    id: "1",
-    name: "Handwoven Ceramic Bowl",
-    price: 45,
-    description: "Beautiful artisan-crafted ceramic bowl with traditional glazing techniques",
-    image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop",
-    artisan: "Sarah Chen",
-    rating: 4.9,
-    tags: ["ceramic", "handmade", "traditional"],
-    featured: true,
-  },
-  {
-    id: "2",
-    name: "Wooden Statement Necklace",
-    price: 28,
-    description: "Eco-friendly wooden jewelry piece with intricate carved details",
-    image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&h=300&fit=crop",
-    artisan: "Maya Rodriguez",
-    rating: 4.8,
-    tags: ["jewelry", "wood", "eco-friendly"],
-    featured: true,
-  },
-  {
-    id: "3",
-    name: "Artisan Leather Tote",
-    price: 120,
-    description: "Premium handcrafted leather tote bag with hand-stitched details",
-    image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=300&fit=crop",
-    artisan: "James Wilson",
-    rating: 4.7,
-    tags: ["leather", "bag", "handstitched"],
-    featured: true,
-  },
-  {
-    id: "4",
-    name: "Watercolor Art Print",
-    price: 35,
-    description: "Original watercolor painting of local landscape, limited edition print",
-    image: "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=300&fit=crop",
-    artisan: "Elena Hoffman",
-    rating: 4.9,
-    tags: ["art", "watercolor", "landscape"],
-    featured: true,
-  },
-];
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  description: string;
+  image_url: string;
+  tags: string[];
+  featured: boolean;
+}
 
 export const FeaturedProducts = () => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .eq("featured", true)
+        .limit(4);
+
+      if (error) throw error;
+      setProducts(data || []);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <section className="py-16 bg-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center space-y-4 mb-12">
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">
+              Loading Featured Products...
+            </h2>
+          </div>
+        </div>
+      </section>
+    );
+  }
   return (
     <section className="py-16 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -61,15 +66,30 @@ export const FeaturedProducts = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featuredProducts.map((product) => (
-            <ProductCard key={product.id} {...product} />
+          {products.map((product) => (
+            <ProductCard
+              key={product.id}
+              id={product.id}
+              name={product.name}
+              price={product.price}
+              description={product.description}
+              image={product.image_url}
+              artisan="Local Artisan"
+              rating={4.8}
+              tags={product.tags}
+              featured={product.featured}
+            />
           ))}
         </div>
 
         <div className="text-center mt-12">
-          <button className="bg-gradient-primary text-primary-foreground px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity">
+          <Button 
+            size="lg" 
+            className="bg-gradient-primary hover:opacity-90"
+            onClick={() => navigate("/products")}
+          >
             View All Products
-          </button>
+          </Button>
         </div>
       </div>
     </section>

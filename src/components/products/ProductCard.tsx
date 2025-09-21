@@ -1,7 +1,8 @@
-import { Heart, Star, Tag } from "lucide-react";
+import { Heart, Star, Tag, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
 
 interface ProductCardProps {
   id: string;
@@ -15,7 +16,7 @@ interface ProductCardProps {
   featured?: boolean;
 }
 
-export const ProductCard = ({
+const ProductCard = ({
   id,
   name,
   price,
@@ -26,8 +27,12 @@ export const ProductCard = ({
   tags,
   featured = false,
 }: ProductCardProps) => {
+  const navigate = useNavigate();
   return (
-    <Card className="group cursor-pointer hover:shadow-elegant transition-all duration-300 overflow-hidden">
+    <Card 
+      className="group cursor-pointer hover:shadow-elegant transition-all duration-300 overflow-hidden"
+      onClick={() => navigate(`/product/${id}`)}
+    >
       <div className="relative">
         <img
           src={image}
@@ -86,14 +91,23 @@ export const ProductCard = ({
               variant="outline" 
               size="sm" 
               className="flex-1 hover:bg-primary hover:text-primary-foreground"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/product/${id}`);
+              }}
             >
               View Details
             </Button>
             <Button 
               size="sm" 
               className="flex-1 bg-gradient-primary hover:opacity-90"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/checkout/${id}`);
+              }}
             >
-              Add to Cart
+              <ShoppingCart className="h-4 w-4 mr-2" />
+              Buy Now
             </Button>
           </div>
         </div>
@@ -101,3 +115,5 @@ export const ProductCard = ({
     </Card>
   );
 };
+
+export default ProductCard;

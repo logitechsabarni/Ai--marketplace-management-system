@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from "lucide-react";
 
-export const Footer = () => {
+const Footer = () => {
   const quickLinks = [
     { name: "Home", href: "/" },
     { name: "Products", href: "/products" },
@@ -117,3 +117,5 @@ export const Footer = () => {
     </footer>
   );
 };
+
+export default Footer;

@@ -1,12 +1,35 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Search, Menu, X, ShoppingCart, User, Upload } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Search, Menu, X, ShoppingCart, User, Upload, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+import UserBalance from "@/components/UserBalance";
 
-export const Navbar = () => {
+const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/");
+  };
 
   const navigation = [
     { name: "Home", href: "/", icon: null },
@@ -64,18 +87,37 @@ export const Navbar = () => {
 
           {/* User Actions */}
           <div className="hidden md:flex items-center space-x-3">
-            <Button variant="ghost" size="sm" className="relative">
+            {user && <UserBalance user={user} />}
+            
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="relative"
+              onClick={() => navigate("/orders")}
+            >
               <ShoppingCart className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                0
-              </span>
             </Button>
-            <Button variant="ghost" size="sm">
-              <User className="w-5 h-5" />
-            </Button>
-            <Button variant="default" size="sm" className="bg-gradient-primary hover:opacity-90">
-              Sign In
-            </Button>
+            
+            {user ? (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  {user.email}
+                </span>
+                <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                  <LogOut className="w-5 h-5" />
+                </Button>
+              </div>
+            ) : (
+              <Button 
+                variant="default" 
+                size="sm" 
+                className="bg-gradient-primary hover:opacity-90"
+                onClick={() => navigate("/auth")}
+              >
+                <User className="w-4 h-4 mr-2" />
+                Sign In
+              </Button>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -123,13 +165,34 @@ export const Navbar = () => {
                   />
                 </div>
                 <div className="flex space-x-3">
-                  <Button variant="outline" size="sm" className="flex-1">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => navigate("/orders")}
+                  >
                     <ShoppingCart className="w-4 h-4 mr-2" />
-                    Cart (0)
+                    Orders
                   </Button>
-                  <Button variant="default" size="sm" className="flex-1 bg-gradient-primary">
-                    Sign In
-                  </Button>
+                  {user ? (
+                    <Button 
+                      variant="default" 
+                      size="sm" 
+                      className="flex-1 bg-gradient-primary"
+                      onClick={handleSignOut}
+                    >
+                      Sign Out
+                    </Button>
+                  ) : (
+                    <Button 
+                      variant="default" 
+                      size="sm" 
+                      className="flex-1 bg-gradient-primary"
+                      onClick={() => navigate("/auth")}
+                    >
+                      Sign In
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
@@ -139,3 +202,5 @@ export const Navbar = () => {
     </nav>
   );
 };
+
+export default Navbar;
