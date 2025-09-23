@@ -10,14 +10,19 @@ import Footer from "@/components/layout/Footer";
 
 interface Order {
   id: string;
+  buyer_id: string;
+  product_id: string;
+  quantity: number;
   total_amount: number;
   status: string;
   payment_method: string;
+  stripe_payment_id: string;
   created_at: string;
+  updated_at: string;
   products: {
     name: string;
     image_url: string;
-  } | null;
+  };
 }
 
 const Orders = () => {
@@ -55,20 +60,33 @@ const Orders = () => {
 
   const fetchOrders = async () => {
     try {
-      const { data, error } = await supabase
+      // First get orders
+      const { data: ordersData, error: ordersError } = await supabase
         .from("orders")
-        .select(`
-          *,
-          products (
-            name,
-            image_url
-          )
-        `)
+        .select("*")
         .eq("buyer_id", user.id)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      setOrders(data || []);
+      if (ordersError) throw ordersError;
+
+      // Then get products for each order
+      const ordersWithProducts: Order[] = [];
+      for (const order of ordersData || []) {
+        const { data: productData, error: productError } = await supabase
+          .from("products")
+          .select("name, image_url")
+          .eq("id", order.product_id)
+          .single();
+
+        if (!productError && productData) {
+          ordersWithProducts.push({
+            ...order,
+            products: productData
+          });
+        }
+      }
+      
+      setOrders(ordersWithProducts);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -147,21 +165,17 @@ const Orders = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-4">
-                    {order.products && (
-                      <>
-                        <img
-                          src={order.products.image_url}
-                          alt={order.products.name}
-                          className="w-16 h-16 object-cover rounded"
-                        />
-                        <div className="flex-1">
-                          <h3 className="font-semibold">{order.products.name}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            Payment: {order.payment_method}
-                          </p>
-                        </div>
-                      </>
-                    )}
+                    <img
+                      src={order.products.image_url}
+                      alt={order.products.name}
+                      className="w-16 h-16 object-cover rounded"
+                    />
+                    <div className="flex-1">
+                      <h3 className="font-semibold">{order.products.name}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Payment: {order.payment_method} • Quantity: {order.quantity}
+                      </p>
+                    </div>
                     <div className="text-right">
                       <p className="text-lg font-bold">
                         ${order.total_amount.toFixed(2)}
