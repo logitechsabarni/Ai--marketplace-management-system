@@ -3,7 +3,6 @@
 ## Project info
 
 **URL**: https://preview--create-pulse-ai.lovable.app/
-Here is a more advanced version of this:- https://44d2c583-a60b-470d-b3b2-e83301ea4ea0.lovableproject.com/
 ## How can I edit this code?
 
 There are several ways of editing your application.
